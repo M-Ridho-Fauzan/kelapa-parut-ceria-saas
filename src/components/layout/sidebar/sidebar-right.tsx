@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 
-import { NavUser } from "@/components/layout/nav-user"
-import { useSidebarRight } from "@/components/layout/sidebar-right-provider"
+import { NavUser } from "@/components/layout/navbar/nav-user";
+import { useSidebarRight } from "@/components/layout/sidebar/sidebar-right-provider";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet"
+} from "@/components/ui/sheet";
 
 interface SidebarRightProps {
   user: {
-    name: string
-    email: string
-    avatar?: string
-  }
+    name: string;
+    email: string;
+    avatar?: string;
+  };
 }
 
 export function SidebarRight({ user }: SidebarRightProps) {
-  const { open, setOpen } = useSidebarRight()
+  const { open, setOpen } = useSidebarRight();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -42,5 +42,5 @@ export function SidebarRight({ user }: SidebarRightProps) {
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

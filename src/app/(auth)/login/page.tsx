@@ -59,6 +59,18 @@ export default function LoginPage() {
                 </FieldDescription>
               )}
             </Field>
+
+            <Field orientation="horizontal">
+              <input
+                id="remember_me"
+                name="remember_me"
+                type="checkbox"
+                className="size-4 rounded border-input accent-primary"
+              />
+              <FieldLabel htmlFor="remember_me" className="font-normal">
+                Ingat saya
+              </FieldLabel>
+            </Field>
           </FieldGroup>
 
           <Button type="submit" className="w-full" disabled={isPending}>

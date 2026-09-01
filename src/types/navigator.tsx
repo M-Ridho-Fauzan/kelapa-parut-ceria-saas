@@ -28,16 +28,16 @@ export const data = {
     },
   ],
   navSecondary: [
-    {
-      title: "Kalender",
-      url: "#",
-      icon: <IconCalendar />,
-    },
-    {
-      title: "Template",
-      url: "#",
-      icon: <IconCube />,
-    },
+    // {
+    //   title: "Kalender",
+    //   url: "#",
+    //   icon: <IconCalendar />,
+    // },
+    // {
+    //   title: "Template",
+    //   url: "#",
+    //   icon: <IconCube />,
+    // },
     {
       title: "Sampah",
       url: "#",

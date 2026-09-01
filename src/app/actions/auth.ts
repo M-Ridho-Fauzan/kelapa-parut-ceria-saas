@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import type { ActionResponse } from "@/types";
 
 export async function signIn(
@@ -25,7 +26,29 @@ export async function signIn(
     };
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const rememberMe = formData.get("remember_me") === "on";
+
+  if (!rememberMe) {
+    const cookieStore = await cookies();
+    const allCookies = cookieStore.getAll();
+    const authCookie = allCookies.find(
+      (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token"),
+    );
+
+    if (authCookie) {
+      cookieStore.set(authCookie.name, authCookie.value, {
+        maxAge: 60 * 60,
+        path: "/",
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+      });
+    }
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (user) {
     const existingUser = await prisma.user.findUnique({
@@ -53,7 +76,9 @@ export async function createUser(
   formData: FormData,
 ): Promise<ActionResponse> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return { error: "Unauthorized" };

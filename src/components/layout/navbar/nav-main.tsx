@@ -1,23 +1,26 @@
-"use client"
+"use client";
 
 import {
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 export function NavMain({
   items,
 }: {
   items: {
-    title: string
-    url: string
-    icon: React.ReactNode
-    isActive?: boolean
-  }[]
+    title: string;
+    url: string;
+    icon: React.ReactNode;
+    isActive?: boolean;
+  }[];
 }) {
   return (
     <SidebarMenu>
+      <SidebarGroupLabel>Quick Access</SidebarGroupLabel>
+
       {items.map((item) => (
         <SidebarMenuItem key={item.title}>
           <SidebarMenuButton
@@ -30,5 +33,5 @@ export function NavMain({
         </SidebarMenuItem>
       ))}
     </SidebarMenu>
-  )
+  );
 }

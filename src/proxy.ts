@@ -27,9 +27,14 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
+  const isLogin = request.nextUrl.pathname === "/login";
 
   if (isDashboard && !user) {
     return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (isLogin && user) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   if (isDashboard && user) {

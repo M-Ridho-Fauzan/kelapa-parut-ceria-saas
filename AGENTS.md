@@ -12,7 +12,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Project: SaaS Kelapa Pengiriman
 
+## Main Rules
+
+- Always mobile-first
+- Always typecheck and refactor after code
+
 ### Tech Stack
+
 - **Framework:** Next.js 16 (App Router, proxy.ts)
 - **Database:** Supabase PostgreSQL + Prisma
 - **Auth:** Supabase Auth (`@supabase/ssr`)
@@ -20,17 +26,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **Icons:** Tabler Icons
 
 ### Supabase Client Patterns
+
 - **Browser client:** `src/lib/supabase/client.ts` → `createBrowserClient`
 - **Server client:** `src/lib/supabase/server.ts` → `createServerClient` + cookies
 - Always use `getUser()` (not `getSession()`) for auth checks
 - Always add `revalidatePath("/", "layout")` after auth actions
 
 ### Route Protection
+
 - Next.js 16 uses `proxy.ts` (NOT `middleware.ts` — deprecated)
 - File location: `src/proxy.ts`
 - Function export: `export function proxy(request: NextRequest)`
 
 ### Prisma Commands
+
 ```bash
 pnpm prisma generate        # Generate Prisma Client
 pnpm prisma migrate dev     # Run migrations (dev)
@@ -39,6 +48,7 @@ pnpm prisma studio          # Open Prisma Studio
 ```
 
 ### Environment Variables
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -47,12 +57,14 @@ DATABASE_URL=
 ```
 
 ### Auth Flow
+
 - Login only via `/login` (no public register)
 - Admin creates users via `/dashboard/admin/users`
 - First admin: create user in Supabase Dashboard → update role to ADMIN in Prisma
 - Prisma User syncs on first login (auto-create with role USER)
 
 ### File Structure
+
 ```
 src/
 ├── app/

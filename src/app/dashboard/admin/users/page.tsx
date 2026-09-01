@@ -34,7 +34,7 @@ export default async function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex md:items-center space-y-2 flex-col md:flex-row md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Kelola User</h1>
           <p className="text-sm text-muted-foreground">
@@ -64,9 +64,7 @@ export default async function AdminUsersPage() {
                     {u.role}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {u.createdAt.toLocaleDateString("id-ID")}
-                </TableCell>
+                <TableCell>{u.createdAt.toLocaleDateString("id-ID")}</TableCell>
               </TableRow>
             ))}
           </TableBody>

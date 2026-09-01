@@ -2,13 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { getSettingsByGroup } from "@/lib/settings";
-import { SidebarLeft } from "@/components/layout/sidebar-left";
-import { SidebarRight } from "@/components/layout/sidebar-right";
-import { SidebarRightProvider } from "@/components/layout/sidebar-right-provider";
-import { SidebarRightTrigger } from "@/components/layout/sidebar-right-trigger";
-import { NavUser } from "@/components/layout/nav-user";
-import { SettingsProvider } from "@/components/layout/settings-provider";
-import { SettingsDialog } from "@/components/layout/settings-dialog";
+import { SidebarLeft } from "@/components/layout/sidebar/sidebar-left";
+import { SidebarRight } from "@/components/layout/sidebar/sidebar-right";
+import { SidebarRightProvider } from "@/components/layout/sidebar/sidebar-right-provider";
+import { SidebarRightTrigger } from "@/components/layout/sidebar/sidebar-right-trigger";
+import { NavUser } from "@/components/layout/navbar/nav-user";
+import { SettingsProvider } from "@/components/layout/settings/settings-provider";
+import { SettingsDialog } from "@/components/layout/settings/settings-dialog";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -71,8 +71,11 @@ export default async function DashboardLayout({
                 </Breadcrumb>
               </div>
               <div className="flex items-center gap-2 pr-2">
+                <div className="hidden md:block">
+                  <NavUser user={userData} variant="sidebar" />
+                </div>
                 <SidebarRightTrigger />
-                <div className="lg:hidden">
+                <div className="md:hidden">
                   <NavUser user={userData} variant="header" />
                 </div>
               </div>

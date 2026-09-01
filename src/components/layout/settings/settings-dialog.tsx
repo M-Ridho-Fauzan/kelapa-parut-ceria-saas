@@ -33,10 +33,10 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { AuthOptionsForm } from "@/components/layout/auth-options-form";
-import { ProfileForm } from "@/components/layout/profile-form";
-import { SecurityForm } from "@/components/layout/security-form";
-import { useSettings } from "@/components/layout/settings-provider";
+import { AuthOptionsForm } from "@/components/sections/settings/auth-options-form";
+import { ProfileForm } from "@/components/sections/settings/profile-form";
+import { SecurityForm } from "@/components/sections/settings/security-form";
+import { useSettings } from "@/components/layout/settings/settings-provider";
 import type { Setting } from "@/types";
 
 const navItems = [{ name: "Autentikasi", icon: IconLock, group: "auth" }];
@@ -101,7 +101,7 @@ export function SettingsDialog({ settings, user }: SettingsDialogProps) {
               </SidebarGroup>
             </SidebarContent>
           </Sidebar>
-          <main className="flex min-h-[300px] max-h-[80dvh] flex-1 flex-col overflow-hidden sm:min-h-0 sm:h-[500px]">
+          <main className="flex min-h-screen py-5 my-5 max-h-[77dvh] md:max-h-80dvh flex-1 flex-col overflow-hidden sm:min-h-0 sm:h-[500px]">
             <header className="flex h-12 shrink-0 items-center gap-2 sm:h-14">
               <div className="flex items-center gap-2 px-4">
                 <Breadcrumb>
@@ -120,7 +120,7 @@ export function SettingsDialog({ settings, user }: SettingsDialogProps) {
               </div>
             </header>
             <div className="flex flex-1 flex-col overflow-hidden">
-              <div className="flex overflow-x-auto border-b px-2 sm:px-4">
+              <div className="flex overflow-x-auto border-b px-2 sm:px-4 mt-5">
                 {tabs.map((tab) => (
                   <button
                     key={tab.value}

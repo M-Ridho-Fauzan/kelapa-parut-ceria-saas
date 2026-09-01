@@ -2,8 +2,16 @@
 
 import * as React from "react";
 import { useActionState, useEffect } from "react";
-import { updatePassword, signOutAllDevices, deleteAccount } from "@/app/actions/profile";
-import { toggleTotp, checkTotpStatus, checkEmailVerified } from "@/app/actions/totp";
+import {
+  updatePassword,
+  signOutAllDevices,
+  deleteAccount,
+} from "@/app/actions/profile";
+import {
+  toggleTotp,
+  checkTotpStatus,
+  checkEmailVerified,
+} from "@/app/actions/totp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -106,7 +114,9 @@ export function SecurityForm({ userRole }: SecurityFormProps) {
         <div className="rounded-lg border p-4">
           <div className="flex items-center gap-2">
             <IconShield className="size-5 text-primary" />
-            <h3 className="text-sm font-medium">Autentikasi Dua Faktor (TOTP)</h3>
+            <h3 className="text-sm font-medium">
+              Autentikasi Dua Faktor (TOTP)
+            </h3>
           </div>
           <div className="mt-4 flex flex-col gap-4">
             {isLoadingTotp ? (
@@ -118,7 +128,9 @@ export function SecurityForm({ userRole }: SecurityFormProps) {
               <div className="flex items-center gap-3 rounded-md bg-muted p-3">
                 <IconMail className="size-5 text-muted-foreground" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium">Email belum diverifikasi</p>
+                  <p className="text-sm font-medium">
+                    Email belum diverifikasi
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     Verifikasi email terlebih dahulu untuk mengaktifkan TOTP
                   </p>
@@ -190,9 +202,7 @@ export function SecurityForm({ userRole }: SecurityFormProps) {
         <form action={passwordAction}>
           <Field>
             <FieldLabel htmlFor="password">Ganti Password</FieldLabel>
-            <FieldDescription>
-              Minimal 6 karakter
-            </FieldDescription>
+            <FieldDescription>Minimal 6 karakter</FieldDescription>
             <div className="flex items-center gap-2">
               <Input
                 id="password"
@@ -213,18 +223,14 @@ export function SecurityForm({ userRole }: SecurityFormProps) {
       <div className="rounded-lg border border-destructive/50 p-4">
         <h3 className="text-sm font-medium text-destructive">Zona Bahaya</h3>
         <div className="mt-4 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row space-y-2  md:items-center md:justify-between">
             <div>
               <p className="text-sm font-medium">Logout dari semua perangkat</p>
               <p className="text-xs text-muted-foreground">
                 Ini akan menghapus semua session aktif
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSignOutAll}
-            >
+            <Button variant="outline" size="sm" onClick={handleSignOutAll}>
               <IconLogout data-icon="inline-start" />
               Logout Semua
             </Button>
@@ -278,7 +284,9 @@ export function SecurityForm({ userRole }: SecurityFormProps) {
                     </Button>
                     <Button
                       variant="destructive"
-                      disabled={deleteConfirmation !== "HAPUS" || isPendingDelete}
+                      disabled={
+                        deleteConfirmation !== "HAPUS" || isPendingDelete
+                      }
                       onClick={handleDeleteAccount}
                     >
                       {isPendingDelete ? "Menghapus..." : "Hapus Akun"}
