@@ -42,10 +42,12 @@ import {
 import Link from "next/link";
 
 interface SecurityFormProps {
-  userRole: string;
+  user: {
+    role: string;
+  };
 }
 
-export function SecurityForm({ userRole }: SecurityFormProps) {
+export function SecurityForm({ user }: SecurityFormProps) {
   const [passwordState, passwordAction, isPendingPassword] = useActionState(
     updatePassword,
     null,
@@ -106,7 +108,7 @@ export function SecurityForm({ userRole }: SecurityFormProps) {
     }
   };
 
-  const isAdmin = userRole === "ADMIN";
+  const isAdmin = user.role === "ADMIN";
 
   return (
     <div className="flex flex-col gap-6">
@@ -248,7 +250,7 @@ export function SecurityForm({ userRole }: SecurityFormProps) {
                 open={showDeleteDialog}
                 onOpenChange={setShowDeleteDialog}
               >
-                <DialogTrigger>
+                <DialogTrigger nativeButton={false}>
                   <Button variant="destructive" size="sm">
                     <IconAlertTriangle data-icon="inline-start" />
                     Hapus Akun

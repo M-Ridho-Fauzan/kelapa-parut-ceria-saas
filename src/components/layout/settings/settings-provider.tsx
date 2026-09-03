@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-type SettingsTab = "profile" | "security" | "auth-options";
+type SettingsTab = string;
 
 interface SettingsContextType {
   open: boolean;
@@ -14,7 +14,7 @@ interface SettingsContextType {
 const SettingsContext = React.createContext<SettingsContextType>({
   open: false,
   setOpen: () => {},
-  activeTab: "profile",
+  activeTab: "profile-form",  // Default to first tab key
   setActiveTab: () => {},
 });
 
@@ -24,7 +24,7 @@ export function useSettings() {
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<SettingsTab>("profile");
+  const [activeTab, setActiveTab] = React.useState<SettingsTab>("profile-form");
 
   return (
     <SettingsContext.Provider value={{ open, setOpen, activeTab, setActiveTab }}>
