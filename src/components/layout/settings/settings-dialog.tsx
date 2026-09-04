@@ -25,7 +25,10 @@ import {
 } from "@/components/ui/sheet";
 import { useSettings } from "@/components/layout/settings/settings-provider";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { allSections, allFormComponents } from "@/components/sections/settings/_registry";
+import {
+  allSections,
+  allFormComponents,
+} from "@/components/sections/settings/_registry";
 import type { Setting } from "@/types";
 
 interface SettingsDialogProps {
@@ -79,13 +82,13 @@ export function SettingsDialog({ settings, user }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="overflow-hidden p-0 my-2 py-2 md:max-w-[700px] lg:max-w-[800px] [&>button]:z-10">
+      <DialogContent className="overflow-hidden p-0 my-2 py-2 md:max-w-175 lg:max-w-200 [&>button]:z-10">
         <DialogTitle className="sr-only">Pengaturan</DialogTitle>
         <DialogDescription className="sr-only">
           Sesuaikan pengaturan aplikasi di sini.
         </DialogDescription>
 
-        <div className="flex min-h-[95vh] max-h-[77dvh] h-[400px]">
+        <div className="flex min-h-[95vh] max-h-[77dvh] h-100">
           {/* Desktop: Left nav panel */}
           {!isMobile && (
             <div className="hidden w-48 shrink-0 border-r md:flex md:flex-col">

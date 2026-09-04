@@ -18,10 +18,7 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -52,9 +49,9 @@ export default async function DashboardLayout({
     <SettingsProvider>
       <SidebarRightProvider>
         <SidebarLeftProvider>
-          <SidebarProvider>
+          <SidebarProvider className="h-screen overflow-hidden">
             <SidebarLeft />
-            <SidebarInset>
+            <SidebarInset className="overflow-y-auto">
               <header className="sticky top-0 flex h-14 shrink-0 items-center gap-2 bg-background">
                 <div className="flex flex-1 items-center gap-2 px-3">
                   <SidebarLeftTrigger />
@@ -73,9 +70,6 @@ export default async function DashboardLayout({
                   </Breadcrumb>
                 </div>
                 <div className="flex items-center gap-2 pr-2">
-                  <div className="hidden md:block">
-                    <NavUser user={userData} variant="sidebar" />
-                  </div>
                   <SidebarRightTrigger />
                   <div className="md:hidden">
                     <NavUser user={userData} variant="header" />
