@@ -24,6 +24,7 @@ import { QuickInfoContent } from "@/components/layout/sidebar/content/quick-info
 import { CalendarContent } from "@/components/layout/sidebar/content/calendar";
 import { NotificationsContent } from "@/components/layout/sidebar/content/notifications";
 import { SettingsContent } from "@/components/layout/sidebar/content/settings";
+import { IconLayoutSidebarRightCollapseFilled } from "@tabler/icons-react";
 
 interface SidebarRightProps {
   user?: {
@@ -108,13 +109,18 @@ export function SidebarRight({ user }: SidebarRightProps) {
         .slice(0, 2)
     : user?.email?.charAt(0).toUpperCase() || "U";
 
-  const handleMouseDown = React.useCallback(
-    (e: React.MouseEvent) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [debugWidth, setDebugWidth] = React.useState<number | null>(null);
+
+  const handlePointerDown = React.useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
       e.preventDefault();
       setIsResizing(true);
-      startXRef.current = e.clientX;
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      startXRef.current = clientX;
       startWidthRef.current = width;
       currentWidthRef.current = width;
+      setDebugWidth(width);
     },
     [width, setIsResizing],
   );
@@ -122,13 +128,15 @@ export function SidebarRight({ user }: SidebarRightProps) {
   React.useEffect(() => {
     if (!isResizing) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = startXRef.current - e.clientX;
+    const handlePointerMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const deltaX = startXRef.current - clientX;
       const newWidth = Math.min(
         maxWidth,
         Math.max(minWidth, startWidthRef.current + deltaX),
       );
       currentWidthRef.current = newWidth;
+      setDebugWidth(newWidth);
       if (containerRef.current) {
         containerRef.current.style.width = `${newWidth}px`;
       }
@@ -138,46 +146,96 @@ export function SidebarRight({ user }: SidebarRightProps) {
       }
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       setWidth(currentWidthRef.current);
       setIsResizing(false);
+      // DEBUG: clear after short delay so user can see final value
+      setTimeout(() => setDebugWidth(null), 1000);
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", handlePointerMove);
+    document.addEventListener("mouseup", handlePointerUp);
+    document.addEventListener("touchmove", handlePointerMove, {
+      passive: false,
+    });
+    document.addEventListener("touchend", handlePointerUp);
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", handlePointerMove);
+      document.removeEventListener("mouseup", handlePointerUp);
+      document.removeEventListener("touchmove", handlePointerMove);
+      document.removeEventListener("touchend", handlePointerUp);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
   }, [isResizing, minWidth, maxWidth, setWidth, setIsResizing]);
 
-  // Mobile: Sheet
+  // Mobile: Sheet — full width on mobile
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-72 p-0">
+        <SheetContent
+          showCloseButton={false}
+          side="right"
+          className="p-0"
+          style={{ width: "100vw", maxWidth: "100vw" }}
+        >
           <SheetHeader className="sr-only">
             <SheetTitle>Sidebar Kanan</SheetTitle>
           </SheetHeader>
           <div className="flex h-full">
-            <div className="flex-1 overflow-y-auto">
-              <ActiveContent />
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex-1 overflow-y-auto">
+                <ActiveContent />
+              </div>
+              <div className="border-t mb-1.5">
+                {user && <NavUser user={user} variant="sidebar" />}
+              </div>
             </div>
-            <div className="flex w-12 flex-col items-center border-l py-2">
+            <div className="flex w-12 shrink-0 flex-col items-center border-l py-2 justify-between">
               <TooltipProvider>
-                {rightSidebarNavItems.map((item) => (
-                  <NavIconButton
-                    key={item.id}
-                    item={item}
-                    isActive={activeItem?.id === item.id}
-                    onClick={() => setActiveItem(item)}
-                  />
-                ))}
+                <div>
+                  <Tooltip>
+                    <TooltipTrigger
+                      onClick={toggle}
+                      className="
+                        flex size-9 items-center justify-center rounded-md transition-colors bg-accent text-accent-foreground mb-2"
+                    >
+                      <IconLayoutSidebarRightCollapseFilled className="size-4" />
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <p>Tutup sidebar</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  {rightSidebarNavItems.map((item) => (
+                    <NavIconButton
+                      key={item.id}
+                      item={item}
+                      isActive={activeItem?.id === item.id}
+                      onClick={() => setActiveItem(item)}
+                    />
+                  ))}
+                </div>
+
+                {user && (
+                  <Tooltip>
+                    <TooltipTrigger
+                      // onClick={toggle}
+                      className="mb-2 cursor-pointer"
+                    >
+                      <Avatar className="size-8">
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback>{initials}</AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <p>{user.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </TooltipProvider>
             </div>
           </div>
@@ -199,11 +257,12 @@ export function SidebarRight({ user }: SidebarRightProps) {
       {open && (
         <div
           className={cn(
-            "shrink-0 w-1 h-full cursor-col-resize flex items-center justify-center group/resize",
+            "shrink-0 w-1 h-full cursor-col-resize flex items-center justify-center group/resize touch-none",
             "bg-transparent hover:bg-primary/20 transition-colors",
             isResizing && "bg-primary/20",
           )}
-          onMouseDown={handleMouseDown}
+          onMouseDown={handlePointerDown}
+          onTouchStart={handlePointerDown}
         >
           <div className="w-px h-6 rounded-full bg-border group-hover/resize:bg-primary/50 transition-colors" />
         </div>
@@ -216,18 +275,34 @@ export function SidebarRight({ user }: SidebarRightProps) {
         style={{ width: `${contentWidth}px` }}
       >
         <div className="flex h-full flex-col w-full">
-          <div className="border-b">
-            {user && <NavUser user={user} variant="sidebar" />}
-          </div>
           <div className="flex-1 overflow-y-auto">
             <ActiveContent />
+          </div>
+          <div className="border-t mb-1.5">
+            {user && <NavUser user={user} variant="sidebar" />}
           </div>
         </div>
       </div>
 
       {/* Icon Navigation - RIGHT (always 48px) */}
-      <div className="flex w-12 flex-col items-center border-l py-2 shrink-0">
+      <div className="flex w-12 flex-col items-center justify-between border-l py-2 shrink-0">
         <TooltipProvider>
+          <div>
+            {rightSidebarNavItems.map((item) => (
+              <NavIconButton
+                key={item.id}
+                item={item}
+                isActive={activeItem?.id === item.id}
+                onClick={() => {
+                  if (!open) {
+                    toggle();
+                  }
+                  setActiveItem(item);
+                }}
+              />
+            ))}
+          </div>
+
           {user && (
             <Tooltip>
               <TooltipTrigger onClick={toggle} className="mb-2 cursor-pointer">
@@ -241,22 +316,15 @@ export function SidebarRight({ user }: SidebarRightProps) {
               </TooltipContent>
             </Tooltip>
           )}
-
-          {rightSidebarNavItems.map((item) => (
-            <NavIconButton
-              key={item.id}
-              item={item}
-              isActive={activeItem?.id === item.id}
-              onClick={() => {
-                if (!open) {
-                  toggle();
-                }
-                setActiveItem(item);
-              }}
-            />
-          ))}
         </TooltipProvider>
       </div>
+
+      {/* DEBUG: Width indicator during resize */}
+      {/* {debugWidth !== null && (
+        <div className="fixed bottom-4 left-1/2 z-200 -translate-x-1/2 rounded-md bg-black/80 px-3 py-1.5 font-mono text-xs text-white shadow-lg">
+          {Math.round(debugWidth)}px ({minWidth}–{maxWidth})
+        </div>
+      )} */}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { TeamSwitcher } from "@/components/features/team-switcher";
 import { useSettings } from "@/components/layout/settings/settings-provider";
 import { QuickAccessProvider } from "@/components/layout/sidebar/quick-access-provider";
 import { useSidebarLeft } from "@/components/layout/sidebar/sidebar-left-provider";
+import { useIsTablet } from "@/hooks/use-tablet";
 import {
   Sheet,
   SheetContent,
@@ -220,6 +221,7 @@ export function SidebarLeft() {
     minWidth,
     maxWidth,
   } = useSidebarLeft();
+  const isTablet = useIsTablet();
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const startXRef = React.useRef(0);
@@ -230,12 +232,13 @@ export function SidebarLeft() {
     currentWidthRef.current = width;
   }, [width]);
 
-  const handleMouseDown = React.useCallback(
-    (e: React.MouseEvent) => {
+  const handlePointerDown = React.useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
       setIsResizing(true);
-      startXRef.current = e.clientX;
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      startXRef.current = clientX;
       startWidthRef.current = width;
       currentWidthRef.current = width;
     },
@@ -245,8 +248,9 @@ export function SidebarLeft() {
   React.useEffect(() => {
     if (!isResizing) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - startXRef.current;
+    const handlePointerMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const deltaX = clientX - startXRef.current;
       const newWidth = Math.min(
         maxWidth,
         Math.max(minWidth, startWidthRef.current + deltaX),
@@ -257,25 +261,29 @@ export function SidebarLeft() {
       }
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       setWidth(currentWidthRef.current);
       setIsResizing(false);
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", handlePointerMove);
+    document.addEventListener("mouseup", handlePointerUp);
+    document.addEventListener("touchmove", handlePointerMove, { passive: false });
+    document.addEventListener("touchend", handlePointerUp);
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", handlePointerMove);
+      document.removeEventListener("mouseup", handlePointerUp);
+      document.removeEventListener("touchmove", handlePointerMove);
+      document.removeEventListener("touchend", handlePointerUp);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
   }, [isResizing, minWidth, maxWidth, setWidth, setIsResizing]);
 
-  if (isMobile) {
+  if (isMobile || isTablet) {
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="w-72 p-0">
@@ -309,11 +317,12 @@ export function SidebarLeft() {
       {/* Resize Handle - at right edge */}
       <div
         className={cn(
-          "shrink-0 w-1 h-full cursor-col-resize flex items-center justify-center group/resize",
+          "shrink-0 w-1 h-full cursor-col-resize flex items-center justify-center group/resize touch-none",
           "bg-transparent hover:bg-primary/20 transition-colors",
           isResizing && "bg-primary/20",
         )}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handlePointerDown}
+        onTouchStart={handlePointerDown}
       >
         <div className="w-px h-6 rounded-full bg-border group-hover/resize:bg-primary/50 transition-colors" />
       </div>

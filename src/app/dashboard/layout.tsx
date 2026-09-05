@@ -8,7 +8,8 @@ import { SidebarLeftTrigger } from "@/components/layout/sidebar/sidebar-left-tri
 import { SidebarRight } from "@/components/layout/sidebar/sidebar-right";
 import { SidebarRightProvider } from "@/components/layout/sidebar/sidebar-right-provider";
 import { SidebarRightTrigger } from "@/components/layout/sidebar/sidebar-right-trigger";
-import { NavUser } from "@/components/layout/navbar/nav-user";
+import { ThemeToggle } from "@/components/features/theme-toggle";
+// import { NavUser } from "@/components/layout/navbar/nav-user";
 import { SettingsProvider } from "@/components/layout/settings/settings-provider";
 import { SettingsDialog } from "@/components/layout/settings/settings-dialog";
 import {
@@ -52,8 +53,35 @@ export default async function DashboardLayout({
           <SidebarProvider className="h-screen overflow-hidden">
             <SidebarLeft />
             <SidebarInset className="overflow-y-auto">
-              <header className="sticky top-0 flex h-14 shrink-0 items-center gap-2 bg-background">
-                <div className="flex flex-1 items-center gap-2 px-3">
+              <header className="sticky top-0 shrink-0 bg-background border-b">
+                {/* Mobile: 2 rows */}
+                <div className="flex flex-col lg:hidden">
+                  {/* Row 1: Icons */}
+                  <div className="flex h-10 items-center justify-between px-3">
+                    <div className="flex items-center gap-2">
+                      <SidebarLeftTrigger />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ThemeToggle />
+                      <SidebarRightTrigger />
+                    </div>
+                  </div>
+                  {/* Row 2: Breadcrumb (scrollable if needed) */}
+                  <div className="flex h-10 items-center border-t px-3 overflow-x-auto">
+                    <Breadcrumb>
+                      <BreadcrumbList>
+                        <BreadcrumbItem>
+                          <BreadcrumbPage className="line-clamp-1 whitespace-nowrap">
+                            Kelapa Pengiriman
+                          </BreadcrumbPage>
+                        </BreadcrumbItem>
+                      </BreadcrumbList>
+                    </Breadcrumb>
+                  </div>
+                </div>
+
+                {/* Desktop: single row */}
+                <div className="hidden lg:flex h-14 items-center gap-2 px-3">
                   <SidebarLeftTrigger />
                   <Separator
                     orientation="vertical"
@@ -68,11 +96,9 @@ export default async function DashboardLayout({
                       </BreadcrumbItem>
                     </BreadcrumbList>
                   </Breadcrumb>
-                </div>
-                <div className="flex items-center gap-2 pr-2">
-                  <SidebarRightTrigger />
-                  <div className="md:hidden">
-                    <NavUser user={userData} variant="header" />
+                  <div className="ml-auto flex items-center gap-2">
+                    <ThemeToggle />
+                    <SidebarRightTrigger />
                   </div>
                 </div>
               </header>
