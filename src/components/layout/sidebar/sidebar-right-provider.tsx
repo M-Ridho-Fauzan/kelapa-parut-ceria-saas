@@ -184,8 +184,10 @@ export function SidebarRightProvider({
   }, []);
 
   const refreshUnreadCount = React.useCallback(() => {
-    // This will be called after mutations to trigger re-fetch
-    setUnreadCount((prev) => prev); // no-op to trigger re-render if needed
+    import("@/app/actions/notification")
+      .then(({ getUnreadCount }) => getUnreadCount())
+      .then(setUnreadCount)
+      .catch(() => {});
   }, []);
 
   return (

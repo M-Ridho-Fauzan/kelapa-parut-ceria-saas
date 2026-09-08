@@ -71,6 +71,15 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
+/**
+ * Notifications for admin users.
+ *
+ * IMPORTANT: Notifications are created via notifyAdmins() or notifyUser()
+ * in src/lib/notify.ts. Always import from there, NOT directly from Prisma.
+ *
+ * Cascade delete: when a User is deleted, all their notifications are deleted.
+ * Indexes: optimized for listing by user (unread first, then newest).
+ */
 model Notification {
   id        String               @id @default(cuid())
   title     String

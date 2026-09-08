@@ -11,8 +11,6 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  console.log(user);
-
   return (
     <div className="space-y-2">
       <h2 className="text-2xl font-bold tracking-tight">

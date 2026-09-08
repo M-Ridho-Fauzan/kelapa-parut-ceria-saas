@@ -19,15 +19,20 @@ export default function TotpVerifyPage() {
   const router = useRouter();
   const [code, setCode] = React.useState("");
 
+  // Use ref to avoid stale closure in useActionState callback
+  const codeRef = React.useRef(code);
+  React.useEffect(() => { codeRef.current = code; });
+
   const [state, formAction, isPending] = useActionState(
     async () => {
-      if (!code) {
+      const currentCode = codeRef.current;
+      if (!currentCode) {
         return {
           error: "Kode tidak boleh kosong",
           toast: { title: "Error", description: "Masukkan kode 6 digit", type: "error" as const },
         };
       }
-      return verifyTotpLogin(code);
+      return verifyTotpLogin(currentCode);
     },
     null,
   );

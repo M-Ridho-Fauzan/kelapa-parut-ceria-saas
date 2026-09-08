@@ -77,12 +77,18 @@ export function NotificationsContent() {
 
   React.useEffect(() => {
     let cancelled = false;
-    getNotifications(50).then((data) => {
-      if (!cancelled && mountedRef.current) {
-        setNotifications(data);
-        setLoading(false);
-      }
-    });
+    getNotifications(50)
+      .then((data) => {
+        if (!cancelled && mountedRef.current) {
+          setNotifications(data);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled && mountedRef.current) {
+          setLoading(false);
+        }
+      });
     return () => { cancelled = true; };
   }, []);
 

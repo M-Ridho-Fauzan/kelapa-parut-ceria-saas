@@ -14,11 +14,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { signOut } from "@/app/actions/auth";
 import { useSettings } from "@/components/layout/settings/settings-provider";
-import { IconSelector, IconLogout, IconUser } from "@tabler/icons-react";
+import { IconLogout, IconUser } from "@tabler/icons-react";
 
 interface NavUserProps {
   user: {
@@ -30,7 +29,6 @@ interface NavUserProps {
 }
 
 export function NavUser({ user, variant = "sidebar" }: NavUserProps) {
-  const { isMobile } = useSidebar();
   const { setOpen, setActiveTab } = useSettings();
 
   const initials = user.name
@@ -126,11 +124,9 @@ export function NavUser({ user, variant = "sidebar" }: NavUserProps) {
               </span>
               <span className="truncate text-xs">{user.email}</span>
             </div>
-            {/* <IconSelector className="ml-auto size-4" /> */}
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="min-w-56 rounded-lg"
-            // side={isMobile ? "bottom" : "left"}
             side="bottom"
             align="start"
             sideOffset={4}

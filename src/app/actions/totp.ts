@@ -24,7 +24,8 @@ export async function checkEmailVerified(): Promise<{
       verified: user.email_confirmed_at !== null,
       email: user.email || null,
     };
-  } catch {
+  } catch (err) {
+    console.error("[totp/checkEmailVerified]", err);
     return { verified: false, email: null };
   }
 }
@@ -52,7 +53,8 @@ export async function checkTotpStatus(): Promise<{
       totpEnabled: dbUser?.totpEnabled || false,
       emailVerified: user.email_confirmed_at !== null,
     };
-  } catch {
+  } catch (err) {
+    console.error("[totp/checkTotpStatus]", err);
     return { totpEnabled: false, emailVerified: false };
   }
 }
@@ -93,7 +95,8 @@ export async function enrollTotp(): Promise<
         type: "success",
       },
     };
-  } catch {
+  } catch (err) {
+    console.error("[totp/enrollTotp]", err);
     return {
       error: "Gagal memulai setup TOTP",
       toast: { title: "Error", description: "Gagal memulai setup TOTP", type: "error" },
@@ -152,7 +155,8 @@ export async function verifyTotpSetup(
         type: "success",
       },
     };
-  } catch {
+  } catch (err) {
+    console.error("[totp/verifyTotpSetup]", err);
     return {
       error: "Gagal memverifikasi TOTP",
       toast: { title: "Error", description: "Gagal memverifikasi TOTP", type: "error" },
@@ -216,7 +220,8 @@ export async function verifyTotpLogin(
         type: "success",
       },
     };
-  } catch {
+  } catch (err) {
+    console.error("[totp/verifyTotpLogin]", err);
     return {
       error: "Gagal memverifikasi TOTP",
       toast: { title: "Error", description: "Gagal memverifikasi TOTP", type: "error" },
@@ -291,7 +296,8 @@ export async function toggleTotp(
         type: "success",
       },
     };
-  } catch {
+  } catch (err) {
+    console.error("[totp/toggleTotp]", err);
     return {
       error: "Gagal mengubah status TOTP",
       toast: {

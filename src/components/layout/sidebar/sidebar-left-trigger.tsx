@@ -5,8 +5,7 @@ import { useSidebarLeft } from "@/components/layout/sidebar/sidebar-left-provide
 import { IconLayoutSidebar } from "@tabler/icons-react";
 
 export function SidebarLeftTrigger() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isMobile, toggle } = useSidebarLeft();
+  const { toggle } = useSidebarLeft();
 
   return (
     <Button variant="ghost" size="icon-sm" onClick={toggle} className="flex">

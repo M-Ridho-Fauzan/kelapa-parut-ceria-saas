@@ -1,6 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { revalidatePath } from "next/cache";
 import { seedDefaultSettings } from "@/lib/settings";
 import { notifyAdmins } from "@/lib/notify";
@@ -11,7 +13,21 @@ export async function updateSettings(
   formData: FormData,
 ): Promise<ActionResponse> {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: "Unauthorized" };
+    }
+
+    await requireAdmin(user.id);
+
     const entries = Array.from(formData.entries());
+
+    // Validate all settings first, then update atomically in a transaction
+    const updates: { key: string; value: string }[] = [];
 
     for (const [key, value] of entries) {
       if (key.startsWith("_")) continue;
@@ -40,11 +56,18 @@ export async function updateSettings(
         validatedValue = value === "on" ? "true" : "false";
       }
 
-      await prisma.setting.update({
-        where: { key },
-        data: { value: validatedValue },
-      });
+      updates.push({ key, value: validatedValue });
     }
+
+    // All validations passed — update atomically
+    await prisma.$transaction(
+      updates.map(({ key, value }) =>
+        prisma.setting.update({
+          where: { key },
+          data: { value },
+        }),
+      ),
+    );
 
     revalidatePath("/dashboard");
 
@@ -59,7 +82,8 @@ export async function updateSettings(
       success: true,
       toast: { title: "Berhasil", description: "Pengaturan telah disimpan", type: "success" },
     };
-  } catch {
+  } catch (err) {
+    console.error("[settings/updateSettings]", err);
     return {
       error: "Gagal menyimpan pengaturan",
       toast: { title: "Error", description: "Gagal menyimpan pengaturan", type: "error" },
@@ -69,6 +93,17 @@ export async function updateSettings(
 
 export async function resetSettings(): Promise<ActionResponse> {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { error: "Unauthorized" };
+    }
+
+    await requireAdmin(user.id);
+
     await seedDefaultSettings();
     revalidatePath("/dashboard");
 
@@ -83,7 +118,8 @@ export async function resetSettings(): Promise<ActionResponse> {
       success: true,
       toast: { title: "Berhasil", description: "Pengaturan telah direset ke default", type: "success" },
     };
-  } catch {
+  } catch (err) {
+    console.error("[settings/resetSettings]", err);
     return {
       error: "Gagal mereset pengaturan",
       toast: { title: "Error", description: "Gagal mereset pengaturan", type: "error" },

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { prisma } from "@/lib/prisma";
+import { isValidEmail, isValidPassword } from "@/lib/auth-helpers";
 import { revalidatePath } from "next/cache";
 import type { ActionResponse } from "@/types";
 
@@ -50,7 +51,8 @@ export async function updateProfile(
       success: true,
       toast: { title: "Berhasil", description: "Nama telah diperbarui", type: "success" },
     };
-  } catch {
+  } catch (err) {
+    console.error("[profile/updateProfile]", err);
     return {
       error: "Gagal memperbarui profil",
       toast: { title: "Error", description: "Gagal memperbarui profil", type: "error" },
@@ -81,6 +83,13 @@ export async function updateEmail(
       };
     }
 
+    if (!isValidEmail(email.trim())) {
+      return {
+        error: "Format email tidak valid",
+        toast: { title: "Error", description: "Format email tidak valid", type: "error" },
+      };
+    }
+
     if (email === user.email) {
       return {
         error: "Email sama dengan yang sebelumnya",
@@ -107,7 +116,8 @@ export async function updateEmail(
         type: "info",
       },
     };
-  } catch {
+  } catch (err) {
+    console.error("[profile/updateEmail]", err);
     return {
       error: "Gagal memperbarui email",
       toast: { title: "Error", description: "Gagal memperbarui email", type: "error" },
@@ -129,16 +139,42 @@ export async function updatePassword(
       return { error: "Unauthorized" };
     }
 
+    const currentPassword = formData.get("current_password") as string;
     const password = formData.get("password") as string;
 
-    if (!password || password.length < 6) {
+    if (!currentPassword) {
       return {
-        error: "Password harus minimal 6 karakter",
+        error: "Password saat ini wajib diisi",
         toast: {
           title: "Error",
-          description: "Password harus minimal 6 karakter",
+          description: "Password saat ini wajib diisi",
           type: "error",
         },
+      };
+    }
+
+    // Verify current password by attempting sign-in
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email!,
+      password: currentPassword,
+    });
+
+    if (verifyError) {
+      return {
+        error: "Password saat ini salah",
+        toast: {
+          title: "Error",
+          description: "Password saat ini salah",
+          type: "error",
+        },
+      };
+    }
+
+    const passwordCheck = isValidPassword(password);
+    if (!passwordCheck.valid) {
+      return {
+        error: passwordCheck.message!,
+        toast: { title: "Error", description: passwordCheck.message!, type: "error" },
       };
     }
 
@@ -157,7 +193,8 @@ export async function updatePassword(
       success: true,
       toast: { title: "Berhasil", description: "Password telah diperbarui", type: "success" },
     };
-  } catch {
+  } catch (err) {
+    console.error("[profile/updatePassword]", err);
     return {
       error: "Gagal memperbarui password",
       toast: { title: "Error", description: "Gagal memperbarui password", type: "error" },
@@ -208,7 +245,19 @@ export async function uploadAvatar(
       };
     }
 
-    const fileExt = file.name.split(".").pop();
+    // Map MIME type to extension (prevents path traversal via filename)
+    const mimeToExt: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+    };
+    const fileExt = mimeToExt[file.type];
+    if (!fileExt) {
+      return {
+        error: "Format file tidak didukung",
+        toast: { title: "Error", description: "Format file harus JPEG, PNG, atau WebP", type: "error" },
+      };
+    }
     const fileName = `${user.id}/avatar.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
@@ -249,7 +298,8 @@ export async function uploadAvatar(
       success: true,
       toast: { title: "Berhasil", description: "Avatar telah diperbarui", type: "success" },
     };
-  } catch {
+  } catch (err) {
+    console.error("[profile/uploadAvatar]", err);
     return {
       error: "Gagal mengupload avatar",
       toast: { title: "Error", description: "Gagal mengupload avatar", type: "error" },
@@ -278,7 +328,8 @@ export async function signOutAllDevices(): Promise<ActionResponse> {
         type: "success",
       },
     };
-  } catch {
+  } catch (err) {
+    console.error("[profile/signOutAllDevices]", err);
     return {
       error: "Gagal logout dari semua perangkat",
       toast: { title: "Error", description: "Gagal logout dari semua perangkat", type: "error" },
@@ -343,7 +394,8 @@ export async function deleteAccount(): Promise<ActionResponse> {
         type: "success",
       },
     };
-  } catch {
+  } catch (err) {
+    console.error("[profile/deleteAccount]", err);
     return {
       error: "Gagal menghapus akun",
       toast: { title: "Error", description: "Gagal menghapus akun", type: "error" },

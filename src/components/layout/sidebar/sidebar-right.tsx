@@ -111,9 +111,10 @@ export function SidebarRight({ user }: SidebarRightProps) {
 
   // Fetch unread notification count
   React.useEffect(() => {
-    import("@/app/actions/notification").then(({ getUnreadCount }) => {
-      getUnreadCount().then(setUnreadCount);
-    });
+    import("@/app/actions/notification")
+      .then(({ getUnreadCount }) => getUnreadCount())
+      .then(setUnreadCount)
+      .catch(() => {});
   }, [setUnreadCount]);
 
   const initials = user?.name
@@ -239,7 +240,6 @@ export function SidebarRight({ user }: SidebarRightProps) {
                 {user && (
                   <Tooltip>
                     <TooltipTrigger
-                      // onClick={toggle}
                       className="mb-2 cursor-pointer"
                     >
                       <Avatar className="size-8">

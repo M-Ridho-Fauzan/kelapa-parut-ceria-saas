@@ -8,7 +8,11 @@ export function PendingRequestBadge() {
   const [count, setCount] = React.useState(0);
 
   React.useEffect(() => {
-    getPendingRequestCount().then(setCount);
+    let cancelled = false;
+    getPendingRequestCount()
+      .then((data) => { if (!cancelled) setCount(data); })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, []);
 
   if (count === 0) return null;

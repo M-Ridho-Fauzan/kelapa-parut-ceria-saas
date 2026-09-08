@@ -100,7 +100,7 @@ export function UserList({ initialUsers }: UserListProps) {
               <TableHead>Nama</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Dibuat</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-12.5"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

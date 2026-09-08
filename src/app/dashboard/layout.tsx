@@ -9,7 +9,6 @@ import { SidebarRight } from "@/components/layout/sidebar/sidebar-right";
 import { SidebarRightProvider } from "@/components/layout/sidebar/sidebar-right-provider";
 import { SidebarRightTrigger } from "@/components/layout/sidebar/sidebar-right-trigger";
 import { ThemeToggle } from "@/components/features/theme-toggle";
-// import { NavUser } from "@/components/layout/navbar/nav-user";
 import { SettingsProvider } from "@/components/layout/settings/settings-provider";
 import { SettingsDialog } from "@/components/layout/settings/settings-dialog";
 import {

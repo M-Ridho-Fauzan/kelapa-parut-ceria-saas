@@ -38,15 +38,20 @@ export default function TotpSetupPage() {
   const [, startTransition] = useTransition();
   const hasHandledVerify = React.useRef(false);
 
+  // Use refs to avoid stale closure in useActionState callback
+  const stateRef = React.useRef(state);
+  React.useEffect(() => { stateRef.current = state; });
+
   const [verifyState, verifyAction, isPendingVerify] = useActionState(
     async () => {
-      if (!state.factorId || !state.code) {
+      const currentState = stateRef.current;
+      if (!currentState.factorId || !currentState.code) {
         return {
           error: "Kode tidak boleh kosong",
           toast: { title: "Error", description: "Masukkan kode 6 digit", type: "error" as const },
         };
       }
-      return verifyTotpSetup(state.factorId, state.code);
+      return verifyTotpSetup(currentState.factorId, currentState.code);
     },
     null,
   );
@@ -75,9 +80,10 @@ export default function TotpSetupPage() {
     if (verifyState?.success) {
       hasHandledVerify.current = true;
       toast.add(verifyState.toast!);
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         router.push("/dashboard");
       }, 2000);
+      return () => clearTimeout(timer);
     } else if (verifyState?.error) {
       toast.add(verifyState.toast!);
     }

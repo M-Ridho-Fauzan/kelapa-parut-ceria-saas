@@ -29,7 +29,7 @@ export const allSections: Record<string, SettingsMetaSection> = {
   billing: billingMeta,
 }
 
-// Register form components
+// Form component props — each form component accepts { user, settings }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const allFormComponents: Record<string, React.ComponentType<any>> = {
   "profile-form": ProfileForm,

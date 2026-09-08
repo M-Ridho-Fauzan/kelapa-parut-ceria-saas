@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin, AuthError } from "@/lib/auth-helpers";
+import { requireAdmin, AuthError, isValidEmail, isValidPassword } from "@/lib/auth-helpers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -14,63 +14,74 @@ export async function signIn(
   prevState: ActionResponse | null,
   formData: FormData,
 ): Promise<ActionResponse> {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  });
-
-  if (error) {
-    return {
-      error: error.message,
-      toast: { title: "Login gagal", description: error.message, type: "error" },
-    };
-  }
-
-  const rememberMe = formData.get("remember_me") === "on";
-
-  if (!rememberMe) {
-    const cookieStore = await cookies();
-    const allCookies = cookieStore.getAll();
-    const authCookie = allCookies.find(
-      (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token"),
-    );
-
-    if (authCookie) {
-      cookieStore.set(authCookie.name, authCookie.value, {
-        maxAge: 60 * 60,
-        path: "/",
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-      });
-    }
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    const existingUser = await prisma.user.findUnique({
-      where: { supabaseId: user.id },
+    const { error } = await supabase.auth.signInWithPassword({
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
     });
 
-    if (!existingUser) {
-      await prisma.user.create({
-        data: {
-          supabaseId: user.id,
-          email: user.email!,
-          name: user.user_metadata?.name || null,
-          role: "USER",
-        },
-      });
+    if (error) {
+      return {
+        error: error.message,
+        toast: { title: "Login gagal", description: error.message, type: "error" },
+      };
     }
-  }
 
-  revalidatePath("/", "layout");
-  redirect("/dashboard");
+    const rememberMe = formData.get("remember_me") === "on";
+
+    if (!rememberMe) {
+      const cookieStore = await cookies();
+      const allCookies = cookieStore.getAll();
+      const authCookie = allCookies.find(
+        (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token"),
+      );
+
+      if (authCookie) {
+        cookieStore.set(authCookie.name, authCookie.value, {
+          maxAge: 60 * 60,
+          path: "/",
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+        });
+      }
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const existingUser = await prisma.user.findUnique({
+        where: { supabaseId: user.id },
+      });
+
+      if (!existingUser) {
+        await prisma.user.create({
+          data: {
+            supabaseId: user.id,
+            email: user.email!,
+            name: user.user_metadata?.name || null,
+            role: "USER",
+          },
+        });
+      }
+    }
+
+    revalidatePath("/", "layout");
+    redirect("/dashboard");
+  } catch (err) {
+    if (err instanceof Error && err.message === "NEXT_REDIRECT") {
+      throw err;
+    }
+    console.error("[auth/signIn]", err);
+    return {
+      error: "Terjadi kesalahan saat login",
+      toast: { title: "Error", description: "Terjadi kesalahan saat login", type: "error" },
+    };
+  }
 }
 
 export async function createUser(
@@ -92,6 +103,21 @@ export async function createUser(
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const name = formData.get("name") as string;
+
+    if (!email || !isValidEmail(email)) {
+      return {
+        error: "Email tidak valid",
+        toast: { title: "Gagal", description: "Format email tidak valid", type: "error" },
+      };
+    }
+
+    const passwordCheck = isValidPassword(password);
+    if (!passwordCheck.valid) {
+      return {
+        error: passwordCheck.message!,
+        toast: { title: "Gagal", description: passwordCheck.message!, type: "error" },
+      };
+    }
 
     const adminSupabase = createAdminClient();
     const { data: newAuthUser, error: createError } =
@@ -155,10 +181,26 @@ export async function createUser(
 }
 
 export async function signOut() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  revalidatePath("/", "layout");
-  redirect("/");
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/");
+    }
+
+    await supabase.auth.signOut();
+    revalidatePath("/", "layout");
+    redirect("/");
+  } catch (err) {
+    if (err instanceof Error && err.message === "NEXT_REDIRECT") {
+      throw err;
+    }
+    console.error("[auth/signOut]", err);
+    redirect("/");
+  }
 }
 
 export async function updateUser(
@@ -186,6 +228,20 @@ export async function updateUser(
       return {
         error: "Data tidak lengkap",
         toast: { title: "Gagal", description: "Data tidak lengkap", type: "error" },
+      };
+    }
+
+    if (!isValidEmail(email)) {
+      return {
+        error: "Email tidak valid",
+        toast: { title: "Gagal", description: "Format email tidak valid", type: "error" },
+      };
+    }
+
+    if (role !== "ADMIN" && role !== "USER") {
+      return {
+        error: "Role tidak valid",
+        toast: { title: "Gagal", description: "Role harus ADMIN atau USER", type: "error" },
       };
     }
 
@@ -326,6 +382,17 @@ export async function deleteUser(
 }
 
 export async function getUsers(search?: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new AuthError(401, "Unauthorized");
+  }
+
+  await requireAdmin(user.id);
+
   return prisma.user.findMany({
     where: search
       ? {

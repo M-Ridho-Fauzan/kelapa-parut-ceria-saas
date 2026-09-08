@@ -10,7 +10,7 @@ import {
   isValidPassword,
 } from "@/lib/auth-helpers";
 import { revalidatePath } from "next/cache";
-import { randomBytes, scrypt } from "crypto";
+import { randomBytes, scrypt, randomUUID } from "crypto";
 import { notifyAdmins } from "@/lib/notify";
 import type { ActionResponse } from "@/types";
 
@@ -29,6 +29,11 @@ function hashPassword(password: string): Promise<string> {
 
 const REQUEST_EXPIRY_DAYS = 7;
 
+/**
+ * Mark expired pending requests.
+ * IMPORTANT: Only call this on write operations (submit, approve, reject).
+ * For read operations, use the filter in the query instead.
+ */
 function markExpiredRequests() {
   return prisma.registrationRequest.updateMany({
     where: {
@@ -41,142 +46,160 @@ function markExpiredRequests() {
   });
 }
 
+/** Filter for non-expired pending requests (read-only, no DB write) */
+function pendingNotExpiredFilter() {
+  return {
+    status: "PENDING" as const,
+    createdAt: {
+      gte: new Date(Date.now() - REQUEST_EXPIRY_DAYS * 24 * 60 * 60 * 1000),
+    },
+  };
+}
+
 export async function submitRegistrationRequest(
   prevState: ActionResponse | null,
   formData: FormData,
 ): Promise<ActionResponse> {
-  const name = (formData.get("name") as string)?.trim() || null;
-  const email = (formData.get("email") as string)?.trim().toLowerCase();
-  const password = formData.get("password") as string;
-  const confirmPassword = formData.get("confirm_password") as string;
+  try {
+    const name = (formData.get("name") as string)?.trim() || null;
+    const email = (formData.get("email") as string)?.trim().toLowerCase();
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirm_password") as string;
 
-  if (!email) {
-    return {
-      error: "Email wajib diisi",
-      toast: { title: "Gagal", description: "Email wajib diisi", type: "error" },
-    };
-  }
+    if (!email) {
+      return {
+        error: "Email wajib diisi",
+        toast: { title: "Gagal", description: "Email wajib diisi", type: "error" },
+      };
+    }
 
-  if (!isValidEmail(email)) {
+    if (!isValidEmail(email)) {
+      return {
+        error: "Format email tidak valid",
+        toast: {
+          title: "Gagal",
+          description: "Format email tidak valid",
+          type: "error",
+        },
+      };
+    }
+
+    if (!password) {
+      return {
+        error: "Password wajib diisi",
+        toast: {
+          title: "Gagal",
+          description: "Password wajib diisi",
+          type: "error",
+        },
+      };
+    }
+
+    const passwordCheck = isValidPassword(password);
+    if (!passwordCheck.valid) {
+      return {
+        error: passwordCheck.message!,
+        toast: { title: "Gagal", description: passwordCheck.message!, type: "error" },
+      };
+    }
+
+    if (password !== confirmPassword) {
+      return {
+        error: "Password tidak cocok",
+        toast: {
+          title: "Gagal",
+          description: "Password tidak cocok",
+          type: "error",
+        },
+      };
+    }
+
+    const existingRequest = await prisma.registrationRequest.findUnique({
+      where: { email },
+    });
+
+    if (existingRequest && existingRequest.status === "PENDING") {
+      return {
+        error: "Email sudah terdaftar dalam antrian",
+        toast: {
+          title: "Gagal",
+          description: "Email sudah terdaftar dalam antrian",
+          type: "error",
+        },
+      };
+    }
+
+    if (existingRequest && existingRequest.status === "APPROVED") {
+      return {
+        error: "Email sudah disetujui, silakan login",
+        toast: {
+          title: "Gagal",
+          description: "Email sudah disetujui, silakan login",
+          type: "error",
+        },
+      };
+    }
+
+    const adminSupabase = createAdminClient();
+    const { data: existingAuthUsers } =
+      await adminSupabase.auth.admin.listUsers();
+
+    if (existingAuthUsers?.users?.some((u) => u.email === email)) {
+      return {
+        error: "Email sudah terdaftar",
+        toast: {
+          title: "Gagal",
+          description: "Email sudah terdaftar",
+          type: "error",
+        },
+      };
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    await markExpiredRequests();
+
+    await prisma.registrationRequest.upsert({
+      where: { email },
+      create: {
+        email,
+        name,
+        password: hashedPassword,
+        status: "PENDING",
+      },
+      update: {
+        name,
+        password: hashedPassword,
+        status: "PENDING",
+        reason: null,
+        reviewedBy: null,
+        reviewedAt: null,
+      },
+    });
+
+    await notifyAdmins({
+      title: "Permintaan registrasi baru",
+      message: `${name || email} telah mengajukan permintaan pendaftaran`,
+      type: "INFO",
+      category: "REGISTRATION",
+      actionUrl: "/dashboard/admin/users",
+    });
+
     return {
-      error: "Format email tidak valid",
+      success: true,
       toast: {
-        title: "Gagal",
-        description: "Format email tidak valid",
-        type: "error",
+        title: "Registrasi berhasil",
+        description: "Permintaan pendaftaran kamu akan ditinjau oleh admin",
+        type: "success",
       },
     };
-  }
-
-  if (!password) {
+  } catch (err) {
+    console.error("[registration/submitRegistrationRequest]", err);
     return {
-      error: "Password wajib diisi",
-      toast: {
-        title: "Gagal",
-        description: "Password wajib diisi",
-        type: "error",
-      },
+      error: "Terjadi kesalahan saat mengirim permintaan",
+      toast: { title: "Error", description: "Terjadi kesalahan saat mengirim permintaan", type: "error" },
     };
   }
-
-  const passwordCheck = isValidPassword(password);
-  if (!passwordCheck.valid) {
-    return {
-      error: passwordCheck.message!,
-      toast: { title: "Gagal", description: passwordCheck.message!, type: "error" },
-    };
-  }
-
-  if (password !== confirmPassword) {
-    return {
-      error: "Password tidak cocok",
-      toast: {
-        title: "Gagal",
-        description: "Password tidak cocok",
-        type: "error",
-      },
-    };
-  }
-
-  const existingRequest = await prisma.registrationRequest.findUnique({
-    where: { email },
-  });
-
-  if (existingRequest && existingRequest.status === "PENDING") {
-    return {
-      error: "Email sudah terdaftar dalam antrian",
-      toast: {
-        title: "Gagal",
-        description: "Email sudah terdaftar dalam antrian",
-        type: "error",
-      },
-    };
-  }
-
-  if (existingRequest && existingRequest.status === "APPROVED") {
-    return {
-      error: "Email sudah disetujui, silakan login",
-      toast: {
-        title: "Gagal",
-        description: "Email sudah disetujui, silakan login",
-        type: "error",
-      },
-    };
-  }
-
-  const adminSupabase = createAdminClient();
-  const { data: existingAuthUsers } =
-    await adminSupabase.auth.admin.listUsers();
-
-  if (existingAuthUsers?.users?.some((u) => u.email === email)) {
-    return {
-      error: "Email sudah terdaftar",
-      toast: {
-        title: "Gagal",
-        description: "Email sudah terdaftar",
-        type: "error",
-      },
-    };
-  }
-
-  const hashedPassword = await hashPassword(password);
-
-  await markExpiredRequests();
-
-  await prisma.registrationRequest.upsert({
-    where: { email },
-    create: {
-      email,
-      name,
-      password: hashedPassword,
-      status: "PENDING",
-    },
-    update: {
-      name,
-      password: hashedPassword,
-      status: "PENDING",
-      reason: null,
-      reviewedBy: null,
-      reviewedAt: null,
-    },
-  });
-
-  await notifyAdmins({
-    title: "Permintaan registrasi baru",
-    message: `${name || email} telah mengajukan permintaan pendaftaran`,
-    type: "INFO",
-    category: "REGISTRATION",
-    actionUrl: "/dashboard/admin/users",
-  });
-
-  return {
-    success: true,
-    toast: {
-      title: "Registrasi berhasil",
-      description: "Permintaan pendaftaran kamu akan ditinjau oleh admin",
-      type: "success",
-    },
-  };
 }
 
 export async function approveRegistrationRequest(
@@ -220,7 +243,7 @@ export async function approveRegistrationRequest(
       };
     }
 
-    const plainPassword = `${request.email}Temp!${Date.now()}`;
+    const plainPassword = randomUUID();
 
     const adminSupabase = createAdminClient();
     const { data: newAuthUser, error: createError } =
@@ -392,18 +415,35 @@ export async function rejectRegistrationRequest(
 }
 
 export async function getPendingRequestCount(): Promise<number> {
-  await markExpiredRequests();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return 0;
+
+  // Use filter instead of write operation
   return prisma.registrationRequest.count({
-    where: { status: "PENDING" },
+    where: pendingNotExpiredFilter(),
   });
 }
 
 export async function getRegistrationRequests(status?: string) {
-  await markExpiredRequests();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
+  if (!user) {
+    throw new AuthError(401, "Unauthorized");
+  }
+
+  await requireAdmin(user.id);
+
+  // Use filter instead of write operation
   const where = status && status !== "ALL"
-    ? { status: status as import("@prisma/client").RegistrationStatus }
-    : {};
+    ? { ...pendingNotExpiredFilter(), status: status as import("@prisma/client").RegistrationStatus }
+    : pendingNotExpiredFilter();
 
   return prisma.registrationRequest.findMany({
     where,
