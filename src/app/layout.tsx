@@ -25,13 +25,20 @@ export const metadata: Metadata = {
   description: "SaaS platform pengiriman kelapa",
 };
 
-// Inline script to apply theme before React hydrates — prevents flash
-const themeScript = `
+// Inline script to apply theme and sidebar state before React hydrates — prevents flash
+const initScript = `
   (function() {
     try {
       var theme = localStorage.getItem('theme') || 'system';
       var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
       if (isDark) document.documentElement.classList.add('dark');
+    } catch(e) {}
+
+    try {
+      window.__SIDEBAR_STATE__ = {
+        leftOpen: localStorage.getItem('sidebar-left-open') === 'true',
+        rightOpen: localStorage.getItem('sidebar-right-open') === 'true',
+      };
     } catch(e) {}
   })();
 `;
@@ -54,7 +61,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: initScript }} />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ThemeProvider>

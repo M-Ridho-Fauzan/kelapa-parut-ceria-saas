@@ -6,6 +6,7 @@ export interface NavItem {
   url: string
   icon: TablerIcon
   isActive?: boolean
+  badge?: React.ReactNode
 }
 
 export interface NavTreeChild {

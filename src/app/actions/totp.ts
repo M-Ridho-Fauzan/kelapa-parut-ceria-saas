@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { notifyAdmins } from "@/lib/notify";
 import type { ActionResponse } from "@/types";
 
 export async function checkEmailVerified(): Promise<{
@@ -270,6 +271,14 @@ export async function toggleTotp(
         data: { totpEnabled: false },
       });
     }
+
+    await notifyAdmins({
+      title: `TOTP ${enable ? "diaktifkan" : "dinonaktifkan"}`,
+      message: `User ${user.email} telah ${enable ? "mengaktifkan" : "menonaktifkan"} autentikasi TOTP`,
+      type: enable ? "SUCCESS" : "WARNING",
+      category: "SECURITY",
+      excludeUserIds: [user.id],
+    });
 
     revalidatePath("/", "layout");
     return {

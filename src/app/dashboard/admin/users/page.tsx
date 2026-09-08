@@ -2,15 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { CreateUserForm } from "./create-user-form";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { RegistrationRequestsButton } from "./registration-requests-button";
+import { UserList } from "./user-list";
 
 export default async function AdminUsersPage() {
   const supabase = await createClient();
@@ -30,6 +23,13 @@ export default async function AdminUsersPage() {
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+    },
   });
 
   return (
@@ -41,35 +41,13 @@ export default async function AdminUsersPage() {
             Buat dan kelola akun pengguna
           </p>
         </div>
-        <CreateUserForm />
+        <div className="flex gap-2 md:flex-row flex-col">
+          <RegistrationRequestsButton />
+          <CreateUserForm />
+        </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Nama</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Dibuat</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell className="font-medium">{u.email}</TableCell>
-                <TableCell>{u.name || "-"}</TableCell>
-                <TableCell>
-                  <Badge variant={u.role === "ADMIN" ? "default" : "secondary"}>
-                    {u.role}
-                  </Badge>
-                </TableCell>
-                <TableCell>{u.createdAt.toLocaleDateString("id-ID")}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <UserList initialUsers={users} />
     </div>
   );
 }

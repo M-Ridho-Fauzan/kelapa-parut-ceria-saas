@@ -45,14 +45,15 @@ export const rightSidebarNavItems: RightSidebarNavItem[] = [
   },
 ];
 
-const STORAGE_KEY = "sidebar-right-width";
+const WIDTH_STORAGE_KEY = "sidebar-right-width";
+const OPEN_STORAGE_KEY = "sidebar-right-open";
 const DEFAULT_WIDTH = 320;
 const MAX_WIDTH = 480;
 const ABSOLUTE_MIN_WIDTH = 200;
 
 function readStoredWidth(): number {
   if (typeof window === "undefined") return DEFAULT_WIDTH;
-  const saved = localStorage.getItem(STORAGE_KEY);
+  const saved = localStorage.getItem(WIDTH_STORAGE_KEY);
   if (saved) {
     const parsed = Number(saved);
     if (!isNaN(parsed) && parsed >= ABSOLUTE_MIN_WIDTH && parsed <= MAX_WIDTH) {
@@ -62,7 +63,6 @@ function readStoredWidth(): number {
   return DEFAULT_WIDTH;
 }
 
-// useSyncExternalStore hooks for hydration-safe localStorage read
 function getSnapshot() {
   return readStoredWidth();
 }
@@ -71,9 +71,21 @@ function getServerSnapshot() {
   return DEFAULT_WIDTH;
 }
 
+function getOpenSnapshot(): boolean {
+  if (typeof window === "undefined") return false;
+  const saved = localStorage.getItem(OPEN_STORAGE_KEY);
+  if (saved === "true") return true;
+  if (saved === "false") return false;
+  return false;
+}
+
+function getOpenServerSnapshot(): boolean {
+  return false;
+}
+
 function subscribe(callback: () => void) {
   const handler = (e: StorageEvent) => {
-    if (e.key === STORAGE_KEY) callback();
+    if (e.key === WIDTH_STORAGE_KEY || e.key === OPEN_STORAGE_KEY) callback();
   };
   window.addEventListener("storage", handler);
   return () => window.removeEventListener("storage", handler);
@@ -93,6 +105,9 @@ interface SidebarRightContextType {
   /** Minimum width based on active content */
   minWidth: number;
   maxWidth: number;
+  unreadCount: number;
+  setUnreadCount: (count: number) => void;
+  refreshUnreadCount: () => void;
 }
 
 const SidebarRightContext = React.createContext<SidebarRightContextType>({
@@ -108,6 +123,9 @@ const SidebarRightContext = React.createContext<SidebarRightContextType>({
   setIsResizing: () => {},
   minWidth: rightSidebarNavItems[0].minWidth,
   maxWidth: MAX_WIDTH,
+  unreadCount: 0,
+  setUnreadCount: () => {},
+  refreshUnreadCount: () => {},
 });
 
 export function useSidebarRight() {
@@ -116,39 +134,58 @@ export function useSidebarRight() {
 
 export function SidebarRightProvider({
   children,
-  defaultOpen = true,
 }: {
   children: React.ReactNode;
-  defaultOpen?: boolean;
 }) {
   const isMobile = useIsMobile();
-  const [open, setOpen] = React.useState(defaultOpen);
   const [activeItem, setActiveItem] = React.useState<RightSidebarNavItem>(
     rightSidebarNavItems[0],
   );
   const [isResizing, setIsResizing] = React.useState(false);
+  const [unreadCount, setUnreadCount] = React.useState(0);
 
-  // Read stored width from localStorage (hydration-safe via useSyncExternalStore)
   const storedWidth = React.useSyncExternalStore(
     subscribe,
     getSnapshot,
     getServerSnapshot,
   );
 
-  // Compute effective width: stored width clamped to active content's minWidth
+  const open = React.useSyncExternalStore(
+    subscribe,
+    getOpenSnapshot,
+    getOpenServerSnapshot,
+  );
+
   const minWidth = activeItem.minWidth;
   const width = Math.max(storedWidth, minWidth);
 
+  const setOpen = React.useCallback((value: boolean) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(OPEN_STORAGE_KEY, String(value));
+      window.dispatchEvent(new StorageEvent("storage", { key: OPEN_STORAGE_KEY }));
+    }
+  }, []);
+
   const toggle = React.useCallback(() => {
-    setOpen((prev) => !prev);
+    if (typeof window !== "undefined") {
+      const current = localStorage.getItem(OPEN_STORAGE_KEY) === "true";
+      const next = !current;
+      localStorage.setItem(OPEN_STORAGE_KEY, String(next));
+      window.dispatchEvent(new StorageEvent("storage", { key: OPEN_STORAGE_KEY }));
+    }
   }, []);
 
   const setWidth = React.useCallback((newWidth: number) => {
     const clamped = Math.min(MAX_WIDTH, Math.max(ABSOLUTE_MIN_WIDTH, newWidth));
     if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, String(clamped));
-      window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }));
+      localStorage.setItem(WIDTH_STORAGE_KEY, String(clamped));
+      window.dispatchEvent(new StorageEvent("storage", { key: WIDTH_STORAGE_KEY }));
     }
+  }, []);
+
+  const refreshUnreadCount = React.useCallback(() => {
+    // This will be called after mutations to trigger re-fetch
+    setUnreadCount((prev) => prev); // no-op to trigger re-render if needed
   }, []);
 
   return (
@@ -166,6 +203,9 @@ export function SidebarRightProvider({
         setIsResizing,
         minWidth,
         maxWidth: MAX_WIDTH,
+        unreadCount,
+        setUnreadCount,
+        refreshUnreadCount,
       }}
     >
       {children}

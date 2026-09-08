@@ -28,12 +28,17 @@ export async function proxy(request: NextRequest) {
 
   const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
   const isLogin = request.nextUrl.pathname === "/login";
+  const isRegister = request.nextUrl.pathname === "/register";
 
   if (isDashboard && !user) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   if (isLogin && user) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (isRegister && user) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

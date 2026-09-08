@@ -13,6 +13,7 @@ import {
   IconReceipt,
 } from "@tabler/icons-react";
 import type { NavTreeItem, NavItem } from "@/types/sidebar";
+import { PendingRequestBadge } from "@/components/features/pending-request-badge";
 
 export const data = {
   teams: [
@@ -34,6 +35,7 @@ export const data = {
       title: "Kelola User",
       url: "/dashboard/admin/users",
       icon: IconUsers,
+      badge: <PendingRequestBadge />,
     },
     {
       id: "kalender",

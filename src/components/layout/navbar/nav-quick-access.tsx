@@ -1,25 +1,25 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { useQuickAccess } from "@/components/layout/sidebar/quick-access-provider"
+} from "@/components/ui/sidebar";
+import { useQuickAccess } from "@/components/layout/sidebar/quick-access-provider";
 import {
   IconDashboard,
   IconUsers,
@@ -36,8 +36,8 @@ import {
   IconChevronDown,
   IconDotsVertical,
   IconX,
-} from "@tabler/icons-react"
-import type { TablerIcon } from "@tabler/icons-react"
+} from "@tabler/icons-react";
+import type { TablerIcon } from "@tabler/icons-react";
 
 const iconMap: Record<string, TablerIcon> = {
   IconDashboard,
@@ -52,10 +52,10 @@ const iconMap: Record<string, TablerIcon> = {
   IconCoin,
   IconShoppingCart,
   IconReceipt,
-}
+};
 
 function getIcon(iconName: string): TablerIcon {
-  return iconMap[iconName] || IconCube
+  return iconMap[iconName] || IconCube;
 }
 
 function QuickAccessDropdown({ onRemove }: { onRemove: () => void }) {
@@ -72,7 +72,7 @@ function QuickAccessDropdown({ onRemove }: { onRemove: () => void }) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
 function useHasMounted() {
@@ -80,34 +80,36 @@ function useHasMounted() {
     () => () => {},
     () => true,
     () => false,
-  )
+  );
 }
 
-export function NavQuickAccess() {
-  const { items, removeItem, maxItems } = useQuickAccess()
-  const [showAll, setShowAll] = React.useState(false)
-  const hasMounted = useHasMounted()
+export function NavQuickAccess({
+  className,
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const { items, removeItem, maxItems } = useQuickAccess();
+  const [showAll, setShowAll] = React.useState(false);
+  const hasMounted = useHasMounted();
 
   if (!hasMounted || items.length === 0) {
     return (
       <SidebarGroup>
-        <SidebarGroupLabel>Quick-Access</SidebarGroupLabel>
-        <p className="px-3 py-2 text-xs text-muted-foreground">
-          Masih kosong
-        </p>
+        <SidebarGroupLabel className={className}>
+          Quick-Access
+        </SidebarGroupLabel>
+        <p className="px-3 py-2 text-xs text-muted-foreground">Masih kosong</p>
       </SidebarGroup>
-    )
+    );
   }
 
-  const visibleItems = showAll ? items : items.slice(0, maxItems)
-  const hiddenItems = items.slice(maxItems)
+  const visibleItems = showAll ? items : items.slice(0, maxItems);
+  const hiddenItems = items.slice(maxItems);
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Quick-Access</SidebarGroupLabel>
+      <SidebarGroupLabel className={className}>Quick-Access</SidebarGroupLabel>
       <SidebarMenu>
         {visibleItems.map((item) => {
-          const Icon = getIcon(item.iconName)
+          const Icon = getIcon(item.iconName);
           return (
             <SidebarMenuItem key={item.id} className="relative">
               <SidebarMenuButton render={<a href={item.url} />}>
@@ -116,7 +118,7 @@ export function NavQuickAccess() {
               </SidebarMenuButton>
               <QuickAccessDropdown onRemove={() => removeItem(item.id)} />
             </SidebarMenuItem>
-          )
+          );
         })}
 
         {hiddenItems.length > 0 && (
@@ -128,14 +130,16 @@ export function NavQuickAccess() {
                     className={`transition-transform ${showAll ? "rotate-180" : ""}`}
                   />
                   <span>
-                    {showAll ? "Sembunyikan" : `Lainnya (${hiddenItems.length})`}
+                    {showAll
+                      ? "Sembunyikan"
+                      : `Lainnya (${hiddenItems.length})`}
                   </span>
                 </SidebarMenuButton>
               </CollapsibleTrigger>
             </SidebarMenuItem>
             <CollapsibleContent>
               {hiddenItems.map((item) => {
-                const Icon = getIcon(item.iconName)
+                const Icon = getIcon(item.iconName);
                 return (
                   <SidebarMenuItem key={item.id} className="relative">
                     <SidebarMenuButton render={<a href={item.url} />}>
@@ -144,12 +148,12 @@ export function NavQuickAccess() {
                     </SidebarMenuButton>
                     <QuickAccessDropdown onRemove={() => removeItem(item.id)} />
                   </SidebarMenuItem>
-                )
+                );
               })}
             </CollapsibleContent>
           </Collapsible>
         )}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

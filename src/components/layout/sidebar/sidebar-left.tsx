@@ -136,23 +136,14 @@ function DesktopSidebarContent() {
       <div className="flex h-14 shrink-0 items-center border-b px-4">
         <TeamSwitcher teams={data.teams} />
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto snap-y">
         <div className="flex flex-col p-2">
           <QuickAccessProvider>
-            <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">
-              Quick-Access
-            </p>
-            <NavQuickAccess />
+            <NavQuickAccess className="snap-start" />
             <div className="my-2 h-px bg-border" />
-            <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">
-              Main
-            </p>
-            <NavMain mainItems={data.navMain} />
+            <NavMain className="snap-start" mainItems={data.navMain} />
             <div className="my-2 h-px bg-border" />
-            <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">
-              Report
-            </p>
-            <NavReport reportItems={data.reports} />
+            <NavReport className="snap-start" reportItems={data.reports} />
           </QuickAccessProvider>
         </div>
       </div>
@@ -178,22 +169,19 @@ function MobileSidebarContent() {
       <div className="flex h-14 shrink-0 items-center border-b px-4">
         <TeamSwitcher teams={data.teams} />
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto snap-y">
         <div className="flex flex-col p-2">
           <QuickAccessProvider>
-            <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">
-              Quick-Access
-            </p>
             <NavQuickAccess />
             <div className="my-2 h-px bg-border" />
-            <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">
+            <p className="px-3 py-1 text-xs snap-start font-semibold text-muted-foreground uppercase">
               Main
             </p>
             {data.navMain.map((item) => (
               <MobileTreeItem key={item.id} item={item} />
             ))}
             <div className="my-2 h-px bg-border" />
-            <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">
+            <p className="px-3 py-1 text-xs snap-start font-semibold text-muted-foreground uppercase">
               Report
             </p>
             {data.reports.map((item) => (
@@ -268,7 +256,9 @@ export function SidebarLeft() {
 
     document.addEventListener("mousemove", handlePointerMove);
     document.addEventListener("mouseup", handlePointerUp);
-    document.addEventListener("touchmove", handlePointerMove, { passive: false });
+    document.addEventListener("touchmove", handlePointerMove, {
+      passive: false,
+    });
     document.addEventListener("touchend", handlePointerUp);
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
@@ -296,17 +286,15 @@ export function SidebarLeft() {
     );
   }
 
-  if (!open) return null;
-
   return (
     <div
       ref={containerRef}
       className={cn(
-        "hidden md:flex h-screen border-r shrink-0",
+        "hidden md:flex h-screen border-r shrink-0 overflow-hidden",
         isResizing && "select-none",
       )}
       style={{
-        width: `${width}px`,
+        width: open ? `${width}px` : "0px",
       }}
     >
       {/* Sidebar Content */}
@@ -315,17 +303,19 @@ export function SidebarLeft() {
       </div>
 
       {/* Resize Handle - at right edge */}
-      <div
-        className={cn(
-          "shrink-0 w-1 h-full cursor-col-resize flex items-center justify-center group/resize touch-none",
-          "bg-transparent hover:bg-primary/20 transition-colors",
-          isResizing && "bg-primary/20",
-        )}
-        onMouseDown={handlePointerDown}
-        onTouchStart={handlePointerDown}
-      >
-        <div className="w-px h-6 rounded-full bg-border group-hover/resize:bg-primary/50 transition-colors" />
-      </div>
+      {open && (
+        <div
+          className={cn(
+            "shrink-0 w-1 h-full cursor-col-resize flex items-center justify-center group/resize touch-none",
+            "bg-transparent hover:bg-primary/20 transition-colors",
+            isResizing && "bg-primary/20",
+          )}
+          onMouseDown={handlePointerDown}
+          onTouchStart={handlePointerDown}
+        >
+          <div className="w-px h-6 rounded-full bg-border group-hover/resize:bg-primary/50 transition-colors" />
+        </div>
+      )}
     </div>
   );
 }

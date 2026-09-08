@@ -1,36 +1,36 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { useQuickAccess } from "@/components/layout/sidebar/quick-access-provider"
+} from "@/components/ui/sidebar";
+import { useQuickAccess } from "@/components/layout/sidebar/quick-access-provider";
 import {
   IconChevronDown,
   IconPlus,
   IconCopy,
   IconDotsVertical,
-} from "@tabler/icons-react"
-import type { NavItem } from "@/types/sidebar"
+} from "@tabler/icons-react";
+import type { NavItem } from "@/types/sidebar";
 
-const MAX_VISIBLE = 4
+const MAX_VISIBLE = 4;
 
 function ReportDropdown({
   onAddToQuickAccess,
   url,
 }: {
-  onAddToQuickAccess: () => void
-  url: string
+  onAddToQuickAccess: () => void;
+  url: string;
 }) {
   return (
     <DropdownMenu>
@@ -49,12 +49,18 @@ function ReportDropdown({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
-export function NavReport({ reportItems }: { reportItems: NavItem[] }) {
-  const { addItem } = useQuickAccess()
-  const [showAll, setShowAll] = React.useState(false)
+export function NavReport({
+  reportItems,
+  className,
+}: {
+  reportItems: NavItem[];
+  className?: string;
+}) {
+  const { addItem } = useQuickAccess();
+  const [showAll, setShowAll] = React.useState(false);
 
   const handleAddToQuickAccess = (item: NavItem) => {
     addItem({
@@ -62,8 +68,8 @@ export function NavReport({ reportItems }: { reportItems: NavItem[] }) {
       title: item.title,
       url: item.url,
       iconName: item.icon.name,
-    })
-  }
+    });
+  };
 
   function renderItem(item: NavItem) {
     return (
@@ -77,12 +83,12 @@ export function NavReport({ reportItems }: { reportItems: NavItem[] }) {
           url={item.url}
         />
       </SidebarMenuItem>
-    )
+    );
   }
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Report</SidebarGroupLabel>
+      <SidebarGroupLabel className={className}>Report</SidebarGroupLabel>
       <SidebarMenu>
         {showAll ? (
           <>
@@ -109,5 +115,5 @@ export function NavReport({ reportItems }: { reportItems: NavItem[] }) {
         )}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

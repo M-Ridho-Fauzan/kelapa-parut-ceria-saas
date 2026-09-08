@@ -12,16 +12,53 @@ enum Role {
   USER
 }
 
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+enum NotificationCategory {
+  USER_MANAGEMENT
+  REGISTRATION
+  SECURITY
+  SETTINGS
+  SYSTEM
+}
+
 model User {
-  id          String   @id @default(cuid())
-  supabaseId  String   @unique
-  email       String   @unique
-  name        String?
-  avatar      String?
-  role        Role     @default(USER)
-  totpEnabled Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  supabaseId    String   @unique
+  email         String   @unique
+  name          String?
+  avatar        String?
+  role          Role     @default(USER)
+  totpEnabled   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  notifications Notification[]
+}
+
+model RegistrationRequest {
+  id         String             @id @default(cuid())
+  name       String?
+  email      String             @unique
+  password   String
+  status     RegistrationStatus @default(PENDING)
+  reason     String?
+  reviewedBy String?
+  reviewedAt DateTime?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
 }
 
 model Setting {
@@ -32,4 +69,23 @@ model Setting {
   type      String   @default("string")
   label     String
   updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String               @id @default(cuid())
+  title     String
+  message   String
+  type      NotificationType     @default(INFO)
+  category  NotificationCategory @default(SYSTEM)
+  read      Boolean              @default(false)
+  userId    String
+  actionUrl String?
+  metadata  String?
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt(sort: Desc)])
 }

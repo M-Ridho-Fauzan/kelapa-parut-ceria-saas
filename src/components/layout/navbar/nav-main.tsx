@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -22,25 +22,25 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar"
-import { useQuickAccess } from "@/components/layout/sidebar/quick-access-provider"
+} from "@/components/ui/sidebar";
+import { useQuickAccess } from "@/components/layout/sidebar/quick-access-provider";
 import {
   IconChevronRight,
   IconChevronDown,
   IconPlus,
   IconCopy,
   IconDotsVertical,
-} from "@tabler/icons-react"
-import type { NavTreeItem, NavTreeChild } from "@/types/sidebar"
+} from "@tabler/icons-react";
+import type { NavTreeItem, NavTreeChild } from "@/types/sidebar";
 
-const MAX_VISIBLE = 4
+const MAX_VISIBLE = 4;
 
 function LeafDropdownMenu({
   onAddToQuickAccess,
   url,
 }: {
-  onAddToQuickAccess: () => void
-  url: string
+  onAddToQuickAccess: () => void;
+  url: string;
 }) {
   return (
     <DropdownMenu>
@@ -58,21 +58,25 @@ function LeafDropdownMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
 function TreeChildItem({
   child,
   onAddToQuickAccess,
 }: {
-  child: NavTreeChild
-  onAddToQuickAccess: (item: { id: string; title: string; url: string }) => void
+  child: NavTreeChild;
+  onAddToQuickAccess: (item: {
+    id: string;
+    title: string;
+    url: string;
+  }) => void;
 }) {
-  const [open, setOpen] = React.useState(false)
-  const hasChildren = child.items && child.items.length > 0
-  const childUrl = hasChildren ? child.items![0].url : child.url
+  const [open, setOpen] = React.useState(false);
+  const hasChildren = child.items && child.items.length > 0;
+  const childUrl = hasChildren ? child.items![0].url : child.url;
   const handleAdd = () =>
-    onAddToQuickAccess({ id: child.id, title: child.title, url: childUrl })
+    onAddToQuickAccess({ id: child.id, title: child.title, url: childUrl });
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -117,21 +121,25 @@ function TreeChildItem({
         </CollapsibleContent>
       )}
     </Collapsible>
-  )
+  );
 }
 
 function TreeItem({
   item,
   onAddToQuickAccess,
 }: {
-  item: NavTreeItem
-  onAddToQuickAccess: (item: { id: string; title: string; url: string }) => void
+  item: NavTreeItem;
+  onAddToQuickAccess: (item: {
+    id: string;
+    title: string;
+    url: string;
+  }) => void;
 }) {
-  const [open, setOpen] = React.useState(item.isActive ?? false)
-  const hasChildren = item.items && item.items.length > 0
-  const itemUrl = hasChildren ? item.items![0].url : item.url
+  const [open, setOpen] = React.useState(item.isActive ?? false);
+  const hasChildren = item.items && item.items.length > 0;
+  const itemUrl = hasChildren ? item.items![0].url : item.url;
   const handleAdd = () =>
-    onAddToQuickAccess({ id: item.id, title: item.title, url: itemUrl })
+    onAddToQuickAccess({ id: item.id, title: item.title, url: itemUrl });
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -144,6 +152,7 @@ function TreeItem({
           >
             <item.icon />
             <span>{item.title}</span>
+            {item.badge}
           </SidebarMenuButton>
         </CollapsibleTrigger>
         {!hasChildren && (
@@ -172,29 +181,35 @@ function TreeItem({
         )}
       </SidebarMenuItem>
     </Collapsible>
-  )
+  );
 }
 
-export function NavMain({ mainItems }: { mainItems: NavTreeItem[] }) {
-  const { addItem } = useQuickAccess()
-  const [showAll, setShowAll] = React.useState(false)
+export function NavMain({
+  mainItems,
+  className,
+}: {
+  mainItems: NavTreeItem[];
+  className?: string;
+}) {
+  const { addItem } = useQuickAccess();
+  const [showAll, setShowAll] = React.useState(false);
 
   const handleAddToQuickAccess = (item: {
-    id: string
-    title: string
-    url: string
+    id: string;
+    title: string;
+    url: string;
   }) => {
     addItem({
       id: item.id,
       title: item.title,
       url: item.url,
       iconName: "IconCube",
-    })
-  }
+    });
+  };
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Main</SidebarGroupLabel>
+      <SidebarGroupLabel className={className}>Main</SidebarGroupLabel>
       <SidebarMenu>
         {showAll ? (
           <>
@@ -233,5 +248,5 @@ export function NavMain({ mainItems }: { mainItems: NavTreeItem[] }) {
         )}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

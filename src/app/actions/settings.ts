@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { seedDefaultSettings } from "@/lib/settings";
+import { notifyAdmins } from "@/lib/notify";
 import type { ActionResponse } from "@/types";
 
 export async function updateSettings(
@@ -46,6 +47,14 @@ export async function updateSettings(
     }
 
     revalidatePath("/dashboard");
+
+    await notifyAdmins({
+      title: "Pengaturan diupdate",
+      message: "Pengaturan sistem telah diperbarui oleh admin",
+      type: "INFO",
+      category: "SETTINGS",
+    });
+
     return {
       success: true,
       toast: { title: "Berhasil", description: "Pengaturan telah disimpan", type: "success" },
@@ -62,6 +71,14 @@ export async function resetSettings(): Promise<ActionResponse> {
   try {
     await seedDefaultSettings();
     revalidatePath("/dashboard");
+
+    await notifyAdmins({
+      title: "Pengaturan direset",
+      message: "Pengaturan sistem telah direset ke default oleh admin",
+      type: "WARNING",
+      category: "SETTINGS",
+    });
+
     return {
       success: true,
       toast: { title: "Berhasil", description: "Pengaturan telah direset ke default", type: "success" },

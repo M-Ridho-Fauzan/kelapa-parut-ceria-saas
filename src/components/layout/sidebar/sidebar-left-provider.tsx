@@ -3,14 +3,15 @@
 import * as React from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
 
-const STORAGE_KEY = "sidebar-left-width"
+const WIDTH_STORAGE_KEY = "sidebar-left-width"
+const OPEN_STORAGE_KEY = "sidebar-left-open"
 const DEFAULT_WIDTH = 256
 const MIN_WIDTH = 200
 const MAX_WIDTH = 400
 
 function getSnapshot(): number {
   if (typeof window === "undefined") return DEFAULT_WIDTH
-  const saved = localStorage.getItem(STORAGE_KEY)
+  const saved = localStorage.getItem(WIDTH_STORAGE_KEY)
   if (saved) {
     const parsed = Number(saved)
     if (!isNaN(parsed) && parsed >= MIN_WIDTH && parsed <= MAX_WIDTH) {
@@ -24,10 +25,18 @@ function getServerSnapshot(): number {
   return DEFAULT_WIDTH
 }
 
+function getOpenSnapshot(): boolean {
+  if (typeof window === "undefined") return false
+  return localStorage.getItem(OPEN_STORAGE_KEY) === "true"
+}
+
+function getOpenServerSnapshot(): boolean {
+  return false
+}
+
 function subscribe(callback: () => void) {
-  // localStorage doesn't have native events, so we use a storage event listener
   const handler = (e: StorageEvent) => {
-    if (e.key === STORAGE_KEY) callback()
+    if (e.key === WIDTH_STORAGE_KEY || e.key === OPEN_STORAGE_KEY) callback()
   }
   window.addEventListener("storage", handler)
   return () => window.removeEventListener("storage", handler)
@@ -65,27 +74,36 @@ export function useSidebarLeft() {
 
 export function SidebarLeftProvider({
   children,
-  defaultOpen = false,
 }: {
   children: React.ReactNode
-  defaultOpen?: boolean
 }) {
   const isMobile = useIsMobile()
-  const [open, setOpen] = React.useState(defaultOpen)
   const [isResizing, setIsResizing] = React.useState(false)
 
   const width = React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const open = React.useSyncExternalStore(subscribe, getOpenSnapshot, getOpenServerSnapshot)
 
-  const setWidth = React.useCallback((newWidth: number) => {
+  const setOpen = React.useCallback((value: boolean) => {
     if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, String(newWidth))
+      localStorage.setItem(OPEN_STORAGE_KEY, String(value))
+      window.dispatchEvent(new StorageEvent("storage", { key: OPEN_STORAGE_KEY }))
     }
-    // Trigger re-render by dispatching a storage event
-    window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY }))
   }, [])
 
   const toggle = React.useCallback(() => {
-    setOpen((prev) => !prev)
+    if (typeof window !== "undefined") {
+      const current = localStorage.getItem(OPEN_STORAGE_KEY) === "true"
+      const next = !current
+      localStorage.setItem(OPEN_STORAGE_KEY, String(next))
+      window.dispatchEvent(new StorageEvent("storage", { key: OPEN_STORAGE_KEY }))
+    }
+  }, [])
+
+  const setWidth = React.useCallback((newWidth: number) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(WIDTH_STORAGE_KEY, String(newWidth))
+    }
+    window.dispatchEvent(new StorageEvent("storage", { key: WIDTH_STORAGE_KEY }))
   }, [])
 
   const value = React.useMemo(
@@ -101,7 +119,7 @@ export function SidebarLeftProvider({
       minWidth: MIN_WIDTH,
       maxWidth: MAX_WIDTH,
     }),
-    [open, isMobile, width, isResizing, setWidth, toggle],
+    [open, isMobile, width, isResizing, setWidth, setOpen, toggle],
   )
 
   return (

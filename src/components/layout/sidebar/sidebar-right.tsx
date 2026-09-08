@@ -45,10 +45,12 @@ function NavIconButton({
   item,
   isActive,
   onClick,
+  badge,
 }: {
   item: (typeof rightSidebarNavItems)[0];
   isActive: boolean;
   onClick: () => void;
+  badge?: number;
 }) {
   const Icon = item.icon;
   return (
@@ -56,13 +58,18 @@ function NavIconButton({
       <TooltipTrigger
         onClick={onClick}
         className={cn(
-          "flex size-9 items-center justify-center rounded-md transition-colors",
+          "relative flex size-9 items-center justify-center rounded-md transition-colors",
           isActive
             ? "bg-accent text-accent-foreground"
             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
         )}
       >
         <Icon className="size-4" />
+        {badge != null && badge > 0 && (
+          <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
       </TooltipTrigger>
       <TooltipContent side="left">
         <p>{item.title}</p>
@@ -85,6 +92,8 @@ export function SidebarRight({ user }: SidebarRightProps) {
     minWidth,
     maxWidth,
     toggle,
+    unreadCount,
+    setUnreadCount,
   } = useSidebarRight();
 
   const ActiveContent = contentMap[activeItem.id] || QuickInfoContent;
@@ -99,6 +108,13 @@ export function SidebarRight({ user }: SidebarRightProps) {
   React.useEffect(() => {
     currentWidthRef.current = width;
   }, [width]);
+
+  // Fetch unread notification count
+  React.useEffect(() => {
+    import("@/app/actions/notification").then(({ getUnreadCount }) => {
+      getUnreadCount().then(setUnreadCount);
+    });
+  }, [setUnreadCount]);
 
   const initials = user?.name
     ? user.name
@@ -275,8 +291,10 @@ export function SidebarRight({ user }: SidebarRightProps) {
         style={{ width: `${contentWidth}px` }}
       >
         <div className="flex h-full flex-col w-full">
-          <div className="flex-1 overflow-y-auto">
-            <ActiveContent />
+          <div className="flex-1 [direction:rtl] overflow-y-auto">
+            <div className="[direction:ltr]">
+              <ActiveContent />
+            </div>
           </div>
           <div className="border-t mb-1.5">
             {user && <NavUser user={user} variant="sidebar" />}
@@ -293,6 +311,7 @@ export function SidebarRight({ user }: SidebarRightProps) {
                 key={item.id}
                 item={item}
                 isActive={activeItem?.id === item.id}
+                badge={item.id === "notifications" ? unreadCount : undefined}
                 onClick={() => {
                   if (!open) {
                     toggle();
